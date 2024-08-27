@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "DrawDebugHelpers.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -122,8 +123,22 @@ void AVoicePowerCharacter::Push(const FInputActionValue& Value)
 	UE_LOG(LogTemp, Warning, TEXT("PUSH"));
 
 	FHitResult HitResult;
-	bool HasHit = GetWorld()->SweepSingleByChannel(HitResult, GetActorLocation(), 
-		GetActorLocation() + GetActorForwardVector(), FQuat::Identity, ECollisionChanel)
+	FVector Start = GetActorLocation() + GetViewRotation().Vector() * 100;
+	FVector End = GetActorLocation() + GetViewRotation().Vector() * 1500;
+	bool HasHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, 
+		ECollisionChannel::ECC_Visibility);
+	if (HasHit) {
+		AActor* Actor = HitResult.GetActor();
+		//UE_LOG(LogTemp, Warning, TEXT("%s"), *Actor->GetName());
+		//DrawDebugSphere(GetWorld(), HitResult.Location, 100, 12, FColor::Red, true);
+		//DrawDebugLine(GetWorld(), Start, HitResult.Location, FColor::Red, true, -1.0F, 0, 3);
+
+		if (Actor->IsRootComponentMovable()) {
+			UStaticMeshComponent* MeshRootComp = Cast<UStaticMeshComponent>(Actor->GetRootComponent());
+			FVector CameraForward = FVector(FirstPersonCameraComponent->GetForwardVector());
+			MeshRootComp->AddForce(CameraForward * 300000 * MeshRootComp->GetMass());
+		}
+	}
 
 }
 
